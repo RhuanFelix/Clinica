@@ -1,16 +1,14 @@
-public class Internacao {
+public abstract class Internacao {
 
-	private TipoLeito tipoLeito;
-	private int qtdeDias;
+	protected int qtdeDias;
 
-	public Internacao(TipoLeito tipoLeito, int qtdeDias) {
-		this.tipoLeito = tipoLeito;
+	public Internacao(int qtdeDias) {
 		this.qtdeDias = qtdeDias;
 	}
 
-	TipoLeito getTipoLeito() {
-		return this.tipoLeito;
-	}
+	public abstract float valorDiarias(float valorDiarias);
+	public abstract String imprimir();
+	public abstract String getTipoLeito();
 
 	int getQtdeDias() {
 		return this.qtdeDias;

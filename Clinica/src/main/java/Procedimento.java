@@ -1,13 +1,7 @@
-public class Procedimento {
+public abstract class Procedimento {
 
-	private TipoProcedimento tipoProcedimento;
-
-	public Procedimento(TipoProcedimento tipoProcedimento) {
-		this.tipoProcedimento = tipoProcedimento;
-	}
-
-	public TipoProcedimento getTipoProcedimento() {
-		return this.tipoProcedimento;
-	}
+	abstract float getValor();
+	abstract String getDescricaoRelatorio(int quantidade);
+	abstract String getTipoProcedimento();
 
 }

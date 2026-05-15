@@ -1,4 +1,5 @@
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -12,6 +13,12 @@ import java.util.stream.Collectors;
 import static org.junit.Assert.*;
 
 public class ProntuarioTest {
+	private ProntuarioService service;
+
+	@Before
+	public void setUp() {
+		service = new ProntuarioService(new ProntuarioRepository());
+	}
 
 	@After
 	public void cleanUp() {
@@ -39,8 +46,8 @@ public class ProntuarioTest {
 	public void testSomenteProcedimentos() {
 		Prontuario prontuario = new Prontuario("Paul McCartney");
 
-		prontuario.addProcedimento(new Procedimento(TipoProcedimento.BASICO));
-		prontuario.addProcedimento(new Procedimento(TipoProcedimento.AVANCADO));
+		prontuario.addProcedimento(new ProcedimentoBasico());
+		prontuario.addProcedimento(new ProcedimentoAvancado());
 
 		final String respostaEsperada = "----------------------------------------------------------------------------------------------" +
 				"\nA conta do(a) paciente Paul McCartney tem valor total de __ R$ 550,00 __" +
@@ -54,18 +61,18 @@ public class ProntuarioTest {
 				"\nVolte sempre, a casa é sua!" +
 				"\n----------------------------------------------------------------------------------------------";
 
-		assertEquals(respostaEsperada, prontuario.imprimaConta());
+		assertEquals(respostaEsperada, service.imprimaConta(prontuario));
 	}
 
 	@Test
 	public void testInternacaoComProcedimentos() {
 		Prontuario prontuario = new Prontuario("Nando Reis");
-		prontuario.setInternacao(new Internacao(TipoLeito.APARTAMENTO, 4));
+		prontuario.setInternacao(new InternacaoApartamento(4));
 
-		prontuario.addProcedimento(new Procedimento(TipoProcedimento.BASICO));
-		prontuario.addProcedimento(new Procedimento(TipoProcedimento.COMUM));
-		prontuario.addProcedimento(new Procedimento(TipoProcedimento.COMUM));
-		prontuario.addProcedimento(new Procedimento(TipoProcedimento.AVANCADO));
+		prontuario.addProcedimento(new ProcedimentoBasico());
+		prontuario.addProcedimento(new ProcedimentoComum());
+		prontuario.addProcedimento(new ProcedimentoComum());
+		prontuario.addProcedimento(new ProcedimentoAvancado());
 
 		final String respostaEsperada = "----------------------------------------------------------------------------------------------" +
 				"\nA conta do(a) paciente Nando Reis tem valor total de __ R$ 1.210,00 __" +
@@ -83,13 +90,13 @@ public class ProntuarioTest {
 				"\nVolte sempre, a casa é sua!" +
 				"\n----------------------------------------------------------------------------------------------";
 
-		assertEquals(respostaEsperada, prontuario.imprimaConta());
+		assertEquals(respostaEsperada, service.imprimaConta(prontuario));
 	}
 
 	@Test
 	public void testSomenteInternacao() {
 		Prontuario prontuario = new Prontuario("MC Criolo");
-		prontuario.setInternacao(new Internacao(TipoLeito.ENFERMARIA, 1));
+		prontuario.setInternacao(new InternacaoEnfermaria(1));
 
 		final String respostaEsperada = "----------------------------------------------------------------------------------------------" +
 				"\nA conta do(a) paciente MC Criolo tem valor total de __ R$ 40,00 __" +
@@ -102,7 +109,7 @@ public class ProntuarioTest {
 				"\nVolte sempre, a casa é sua!" +
 				"\n----------------------------------------------------------------------------------------------";
 
-		assertEquals(respostaEsperada, prontuario.imprimaConta());
+		assertEquals(respostaEsperada, service.imprimaConta(prontuario));
 	}
 
 	@Test
@@ -112,7 +119,7 @@ public class ProntuarioTest {
 		Prontuario prontuario = null;
 
 		try {
-			prontuario = new Prontuario(null).carregueProntuario(path);
+			prontuario = service.carregueProntuario(path);
 		} catch (IOException ioException) {
 			ioException.printStackTrace();
 		}
@@ -120,12 +127,12 @@ public class ProntuarioTest {
 		assertEquals("Ermenegildo Godofredo", prontuario.getNomePaciente());
 		assertNull(prontuario.getInternacao());
 
-		Map<TipoProcedimento, Long> procedimentosAgrupados = prontuario.getProcedimentos().stream().collect(
+		Map<String, Long> procedimentosAgrupados = prontuario.getProcedimentos().stream().collect(
 				Collectors.groupingBy(Procedimento::getTipoProcedimento, Collectors.counting()));
 
-		assertEquals(10L, procedimentosAgrupados.get(TipoProcedimento.BASICO).longValue());
-		assertEquals(2L, procedimentosAgrupados.get(TipoProcedimento.COMUM).longValue());
-		assertNull(procedimentosAgrupados.get(TipoProcedimento.AVANCADO));
+		assertEquals(10L, procedimentosAgrupados.get(new ProcedimentoBasico().getTipoProcedimento()).longValue());
+		assertEquals(2L, procedimentosAgrupados.get(new ProcedimentoComum().getTipoProcedimento()).longValue());
+		assertNull(procedimentosAgrupados.get(new ProcedimentoAvancado().getTipoProcedimento()));
 	}
 
 	@Test
@@ -135,7 +142,7 @@ public class ProntuarioTest {
 		Prontuario prontuario = null;
 
 		try {
-			prontuario = new Prontuario(null).carregueProntuario(path);
+			prontuario = service.carregueProntuario(path);
 		} catch (IOException ioException) {
 			ioException.printStackTrace();
 			fail(ioException.getMessage());
@@ -145,7 +152,7 @@ public class ProntuarioTest {
 		assertEquals(0, prontuario.getProcedimentos().size());
 		Internacao internacao = prontuario.getInternacao();
 		assertEquals(10, internacao.getQtdeDias());
-		assertEquals(TipoLeito.APARTAMENTO, internacao.getTipoLeito());
+		assertEquals("APARTAMENTO", internacao.getTipoLeito());
 	}
 
 	@Test
@@ -155,7 +162,7 @@ public class ProntuarioTest {
 		Prontuario prontuario = null;
 
 		try {
-			prontuario = new Prontuario(null).carregueProntuario(path);
+			prontuario = service.carregueProntuario(path);
 		} catch (IOException ioException) {
 			ioException.printStackTrace();
 		}
@@ -163,14 +170,14 @@ public class ProntuarioTest {
 		assertEquals("Adalgisa da Silva", prontuario.getNomePaciente());
 		Internacao internacao = prontuario.getInternacao();
 		assertEquals(20, internacao.getQtdeDias());
-		assertEquals(TipoLeito.ENFERMARIA, internacao.getTipoLeito());
+		assertEquals("ENFERMARIA", internacao.getTipoLeito());
 
-		Map<TipoProcedimento, Long> procedimentosAgrupados = prontuario.getProcedimentos().stream().collect(
+		Map<String, Long> procedimentosAgrupados = prontuario.getProcedimentos().stream().collect(
 				Collectors.groupingBy(Procedimento::getTipoProcedimento, Collectors.counting()));
 
-		assertEquals(20L, procedimentosAgrupados.get(TipoProcedimento.BASICO).longValue());
-		assertEquals(15L, procedimentosAgrupados.get(TipoProcedimento.AVANCADO).longValue());
-		assertNull(procedimentosAgrupados.get(TipoProcedimento.COMUM));
+		assertEquals(20L, procedimentosAgrupados.get(new ProcedimentoBasico().getTipoProcedimento()).longValue());
+		assertEquals(15L, procedimentosAgrupados.get(new ProcedimentoAvancado().getTipoProcedimento()).longValue());
+		assertNull(procedimentosAgrupados.get(new ProcedimentoComum().getTipoProcedimento()));
 	}
 /**
 	@Test
